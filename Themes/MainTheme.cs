@@ -1,5 +1,6 @@
 using MudBlazor;
 using MudBlazor.Utilities;
+using static MudBlazor.Colors;
 
 namespace Cascadia_MetalFlow_System.Themes
 {
@@ -9,7 +10,7 @@ namespace Cascadia_MetalFlow_System.Themes
         {
             PaletteLight = new PaletteLight()
             {
-                Primary = new MudColor("#008080"), // Teal
+                Primary = Teal.Darken1,
                 Secondary = new MudColor("#7C3AED"),
                 Success = new MudColor("#16A34A"),
                 Warning = new MudColor("#D97706"),
