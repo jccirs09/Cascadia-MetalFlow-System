@@ -1,0 +1,94 @@
+@using Cascadia_MetalFlow_System.Data
+@using Cascadia_MetalFlow_System.Models
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject UserManager<ApplicationUser> UserManager
+@inject RoleManager<IdentityRole> RoleManager
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">@_isEditMode ? "Edit" : "Add" User</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="User.FirstName" Label="First Name" Required="true" />
+        <MudTextField @bind-Value="User.LastName" Label="Last Name" Required="true" />
+        <MudTextField @bind-Value="User.Email" Label="Email" Required="true" />
+        @if (!_isEditMode)
+        {
+            <MudTextField @bind-Value="_password" Label="Password" InputType="InputType.Password" Required="true" />
+        }
+        <MudSelect T="string" @bind-Value="_selectedRole" Label="Role" Required="true">
+            @foreach (var role in _roles)
+            {
+                <MudSelectItem Value="@role">@role</MudSelectItem>
+            }
+        </MudSelect>
+        <MudSelect T="int?" @bind-Value="User.CompanyBranchId" Label="Branch">
+            @foreach (var branch in _branches)
+            {
+                <MudSelectItem Value="@branch.Id">@branch.Name</MudSelectItem>
+            }
+        </MudSelect>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Save">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public ApplicationUser User { get; set; } = new();
+
+    private bool _isEditMode => !string.IsNullOrEmpty(User.Id);
+    private string _password = string.Empty;
+    private string _selectedRole = string.Empty;
+    private List<string> _roles = new();
+    private List<CompanyBranch> _branches = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _roles = await RoleManager.Roles.Select(r => r.Name!).ToListAsync();
+        using var context = await DbFactory.CreateDbContextAsync();
+        _branches = await context.CompanyBranches.ToListAsync();
+
+        if (_isEditMode)
+        {
+            var userRoles = await UserManager.GetRolesAsync(User);
+            _selectedRole = userRoles.FirstOrDefault() ?? string.Empty;
+        }
+    }
+
+    private async Task Save()
+    {
+        if (_isEditMode)
+        {
+            var userInDb = await UserManager.FindByIdAsync(User.Id);
+            if(userInDb != null)
+            {
+                userInDb.FirstName = User.FirstName;
+                userInDb.LastName = User.LastName;
+                userInDb.Email = User.Email;
+                userInDb.CompanyBranchId = User.CompanyBranchId;
+                await UserManager.UpdateAsync(userInDb);
+
+                var roles = await UserManager.GetRolesAsync(userInDb);
+                await UserManager.RemoveFromRolesAsync(userInDb, roles);
+                await UserManager.AddToRoleAsync(userInDb, _selectedRole);
+            }
+        }
+        else
+        {
+            User.UserName = User.Email;
+            var result = await UserManager.CreateAsync(User, _password);
+            if (result.Succeeded)
+            {
+                await UserManager.AddToRoleAsync(User, _selectedRole);
+            }
+        }
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    void Cancel() => MudDialog.Cancel();
+}

@@ -1,0 +1,41 @@
+@using MudBlazor
+@using Cascadia_MetalFlow_System.Data
+@using Cascadia_MetalFlow_System.Models
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">@Branch.Id == 0 ? "Add" : "Edit" Branch</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="Branch.Name" Label="Name" Required="true" />
+        <MudTextField @bind-Value="Branch.Location" Label="Location" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Save">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public CompanyBranch Branch { get; set; } = new();
+
+    private async Task Save()
+    {
+        using var context = DbFactory.CreateDbContext();
+        if (Branch.Id == 0)
+        {
+            context.CompanyBranches.Add(Branch);
+        }
+        else
+        {
+            context.CompanyBranches.Update(Branch);
+        }
+        await context.SaveChangesAsync();
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    void Cancel() => MudDialog.Cancel();
+}
