@@ -1,30 +1,26 @@
-﻿@implements IDisposable
-
+@implements IDisposable
 @inject NavigationManager NavigationManager
 
 <MudNavMenu>
     <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
-    <MudNavLink Href="counter" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Add">Counter</MudNavLink>
-    
-    <MudNavLink Href="weather" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">Weather</MudNavLink>
 
-    <AuthorizeView Roles="@RoleNames.Admin">
-        <MudNavLink Href="company-branch-management" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Business">Company Branches</MudNavLink>
+    <AuthorizeView Roles="@($"{RoleNames.Admin},{RoleNames.Manager},{RoleNames.Supervisor},{RoleNames.Driver}")" Context="systemPanelContext">
+        <MudNavGroup Title="System Panel" Expanded="true">
+            <AuthorizeView Roles="@RoleNames.Admin" Context="branchContext">
+                <MudNavLink Href="company-branch-management" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Business">Company Branches</MudNavLink>
+            </AuthorizeView>
+            <AuthorizeView Roles="@($"{RoleNames.Admin},{RoleNames.Manager}")" Context="userContext">
+                <MudNavLink Href="user-management" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.People">User Management</MudNavLink>
+            </AuthorizeView>
+            <AuthorizeView Roles="@($"{RoleNames.Admin},{RoleNames.Manager},{RoleNames.Supervisor}")" Context="machineContext">
+                <MudNavLink Href="machine-management" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.PrecisionManufacturing">Machine Management</MudNavLink>
+            </AuthorizeView>
+            <AuthorizeView Roles="@($"{RoleNames.Admin},{RoleNames.Manager},{RoleNames.Driver}")" Context="truckContext">
+                <MudNavLink Href="delivery-truck-management" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.LocalShipping">Delivery Trucks</MudNavLink>
+            </AuthorizeView>
+        </MudNavGroup>
     </AuthorizeView>
 
-    <AuthorizeView Roles="@($"{RoleNames.Admin},{RoleNames.Manager}")">
-        <MudNavLink Href="user-management" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.People">User Management</MudNavLink>
-    </AuthorizeView>
-
-    <AuthorizeView Roles="@($"{RoleNames.Admin},{RoleNames.Manager},{RoleNames.Supervisor}")">
-        <MudNavLink Href="machine-management" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.PrecisionManufacturing">Machine Management</MudNavLink>
-    </AuthorizeView>
-
-    <AuthorizeView Roles="@($"{RoleNames.Admin},{RoleNames.Manager},{RoleNames.Driver}")">
-        <MudNavLink Href="delivery-truck-management" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.LocalShipping">Delivery Trucks</MudNavLink>
-    </AuthorizeView>
-
-    <MudNavLink Href="auth" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Lock">Auth Required</MudNavLink>
     <AuthorizeView>
         <Authorized>
             <MudNavLink Href="Account/Manage" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Person">@context.User.Identity?.Name</MudNavLink>
@@ -37,7 +33,6 @@
             </form>
         </Authorized>
         <NotAuthorized>
-            <MudNavLink Href="Account/Register" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Person">Register</MudNavLink>
             <MudNavLink Href="Account/Login" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Password">Login</MudNavLink>
         </NotAuthorized>
     </AuthorizeView>
@@ -64,4 +59,3 @@
         NavigationManager.LocationChanged -= OnLocationChanged;
     }
 }
-

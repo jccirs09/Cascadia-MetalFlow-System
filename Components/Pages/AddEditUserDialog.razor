@@ -81,6 +81,7 @@
         else
         {
             User.UserName = User.Email;
+            User.EmailConfirmed = true;
             var result = await UserManager.CreateAsync(User, _password);
             if (result.Succeeded)
             {

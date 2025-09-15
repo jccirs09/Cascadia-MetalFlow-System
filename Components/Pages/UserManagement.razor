@@ -13,41 +13,59 @@
 
 <PageTitle>User Management</PageTitle>
 
-<h1>User Management</h1>
+<MudText Typo="Typo.h4" GutterBottom="true">User Management</MudText>
 
-<MudTable Items="@_userViewModels" Hover="true" SortLabel="Sort By">
-    <ToolBarContent>
-        <AuthorizeView Roles="@RoleNames.Admin">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateUser">Create User</MudButton>
-        </AuthorizeView>
-    </ToolBarContent>
-    <HeaderContent>
-        <MudTh>First Name</MudTh>
-        <MudTh>Last Name</MudTh>
-        <MudTh>Email</MudTh>
-        <MudTh>Roles</MudTh>
-        <MudTh>Branch</MudTh>
-        <MudTh>Actions</MudTh>
-    </HeaderContent>
-    <RowTemplate>
-        <MudTd DataLabel="First Name">@context.User.FirstName</MudTd>
-        <MudTd DataLabel="Last Name">@context.User.LastName</MudTd>
-        <MudTd DataLabel="Email">@context.User.Email</MudTd>
-        <MudTd DataLabel="Roles">@string.Join(", ", context.Roles)</MudTd>
-        <MudTd DataLabel="Branch">@context.User.CompanyBranch?.Name</MudTd>
-        <MudTd>
-            <AuthorizeView Roles="@RoleNames.Admin" Context="authContext">
-                <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="@(() => EditUser(context.User))" />
-                <MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="@(() => DeleteUser(context.User))" />
+@if (_loading)
+{
+    <MudPaper Class="pa-4">
+        <MudSkeleton />
+        <MudSkeleton />
+        <MudSkeleton />
+    </MudPaper>
+}
+else
+{
+    <MudTable Items="@_userViewModels" Hover="true" SortLabel="Sort By">
+        <ToolBarContent>
+            <AuthorizeView Roles="@RoleNames.Admin">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateUser">Create User</MudButton>
             </AuthorizeView>
-        </MudTd>
-    </RowTemplate>
-    <PagerContent>
-        <MudTablePager />
-    </PagerContent>
-</MudTable>
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh>First Name</MudTh>
+            <MudTh>Last Name</MudTh>
+            <MudTh>Email</MudTh>
+            <MudTh>Roles</MudTh>
+            <MudTh>Branch</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <NoRecordsContent>
+            <MudText>No users found.</MudText>
+            <AuthorizeView Roles="@RoleNames.Admin">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateUser" Class="mt-4">Create a User</MudButton>
+            </AuthorizeView>
+        </NoRecordsContent>
+        <RowTemplate>
+            <MudTd DataLabel="First Name">@context.User.FirstName</MudTd>
+            <MudTd DataLabel="Last Name">@context.User.LastName</MudTd>
+            <MudTd DataLabel="Email">@context.User.Email</MudTd>
+            <MudTd DataLabel="Roles">@string.Join(", ", context.Roles)</MudTd>
+            <MudTd DataLabel="Branch">@context.User.CompanyBranch?.Name</MudTd>
+            <MudTd>
+                <AuthorizeView Roles="@RoleNames.Admin" Context="authContext">
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="@(() => EditUser(context.User))" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="@(() => DeleteUser(context.User))" />
+                </AuthorizeView>
+            </MudTd>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager />
+        </PagerContent>
+    </MudTable>
+}
 
 @code {
+    private bool _loading = true;
     private IEnumerable<UserViewModel> _userViewModels = new List<UserViewModel>();
 
     public class UserViewModel
@@ -63,6 +81,7 @@
 
     private async Task LoadUsers()
     {
+        _loading = true;
         using var context = await DbFactory.CreateDbContextAsync();
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
@@ -103,6 +122,7 @@
             });
         }
         _userViewModels = userViewModels;
+        _loading = false;
     }
 
     private async Task CreateUser()

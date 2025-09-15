@@ -10,33 +10,49 @@
 
 <PageTitle>Machine Management</PageTitle>
 
-<h1>Machine Management</h1>
+<MudText Typo="Typo.h4" GutterBottom="true">Machine Management</MudText>
 
-<MudTable Items="@_machines" Hover="true" SortLabel="Sort By">
-    <ToolBarContent>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateMachine">Create Machine</MudButton>
-    </ToolBarContent>
-    <HeaderContent>
-        <MudTh>Name</MudTh>
-        <MudTh>Description</MudTh>
-        <MudTh>Branch</MudTh>
-        <MudTh>Actions</MudTh>
-    </HeaderContent>
-    <RowTemplate>
-        <MudTd DataLabel="Name">@context.Name</MudTd>
-        <MudTd DataLabel="Description">@context.Description</MudTd>
-        <MudTd DataLabel="Branch">@context.CompanyBranch?.Name</MudTd>
-        <MudTd>
-            <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="@(() => EditMachine(context))" />
-            <MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="@(() => DeleteMachine(context))" />
-        </MudTd>
-    </RowTemplate>
-    <PagerContent>
-        <MudTablePager />
-    </PagerContent>
-</MudTable>
+@if (_loading)
+{
+    <MudPaper Class="pa-4">
+        <MudSkeleton />
+        <MudSkeleton />
+        <MudSkeleton />
+    </MudPaper>
+}
+else
+{
+    <MudTable Items="@_machines" Hover="true" SortLabel="Sort By">
+        <ToolBarContent>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateMachine">Create Machine</MudButton>
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh>Name</MudTh>
+            <MudTh>Description</MudTh>
+            <MudTh>Branch</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <NoRecordsContent>
+            <MudText>No machines found.</MudText>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateMachine" Class="mt-4">Create a Machine</MudButton>
+        </NoRecordsContent>
+        <RowTemplate>
+            <MudTd DataLabel="Name">@context.Name</MudTd>
+            <MudTd DataLabel="Description">@context.Description</MudTd>
+            <MudTd DataLabel="Branch">@context.CompanyBranch?.Name</MudTd>
+            <MudTd>
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="@(() => EditMachine(context))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="@(() => DeleteMachine(context))" />
+            </MudTd>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager />
+        </PagerContent>
+    </MudTable>
+}
 
 @code {
+    private bool _loading = true;
     private IEnumerable<Machine> _machines = new List<Machine>();
 
     protected override async Task OnInitializedAsync()
@@ -46,8 +62,10 @@
 
     private async Task LoadMachines()
     {
+        _loading = true;
         using var context = await DbFactory.CreateDbContextAsync();
         _machines = await context.Machines.Include(m => m.CompanyBranch).ToListAsync();
+        _loading = false;
     }
 
     private async Task CreateMachine()

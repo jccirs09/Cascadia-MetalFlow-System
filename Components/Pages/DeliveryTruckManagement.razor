@@ -10,33 +10,49 @@
 
 <PageTitle>Delivery Truck Management</PageTitle>
 
-<h1>Delivery Truck Management</h1>
+<MudText Typo="Typo.h4" GutterBottom="true">Delivery Truck Management</MudText>
 
-<MudTable Items="@_trucks" Hover="true" SortLabel="Sort By">
-    <ToolBarContent>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateTruck">Create Truck</MudButton>
-    </ToolBarContent>
-    <HeaderContent>
-        <MudTh>License Plate</MudTh>
-        <MudTh>Model</MudTh>
-        <MudTh>Branch</MudTh>
-        <MudTh>Actions</MudTh>
-    </HeaderContent>
-    <RowTemplate>
-        <MudTd DataLabel="License Plate">@context.LicensePlate</MudTd>
-        <MudTd DataLabel="Model">@context.Model</MudTd>
-        <MudTd DataLabel="Branch">@context.CompanyBranch?.Name</MudTd>
-        <MudTd>
-            <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="@(() => EditTruck(context))" />
-            <MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="@(() => DeleteTruck(context))" />
-        </MudTd>
-    </RowTemplate>
-    <PagerContent>
-        <MudTablePager />
-    </PagerContent>
-</MudTable>
+@if (_loading)
+{
+    <MudPaper Class="pa-4">
+        <MudSkeleton />
+        <MudSkeleton />
+        <MudSkeleton />
+    </MudPaper>
+}
+else
+{
+    <MudTable Items="@_trucks" Hover="true" SortLabel="Sort By">
+        <ToolBarContent>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateTruck">Create Truck</MudButton>
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh>License Plate</MudTh>
+            <MudTh>Model</MudTh>
+            <MudTh>Branch</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <NoRecordsContent>
+            <MudText>No trucks found.</MudText>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateTruck" Class="mt-4">Create a Truck</MudButton>
+        </NoRecordsContent>
+        <RowTemplate>
+            <MudTd DataLabel="License Plate">@context.LicensePlate</MudTd>
+            <MudTd DataLabel="Model">@context.Model</MudTd>
+            <MudTd DataLabel="Branch">@context.CompanyBranch?.Name</MudTd>
+            <MudTd>
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="@(() => EditTruck(context))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="@(() => DeleteTruck(context))" />
+            </MudTd>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager />
+        </PagerContent>
+    </MudTable>
+}
 
 @code {
+    private bool _loading = true;
     private IEnumerable<DeliveryTruck> _trucks = new List<DeliveryTruck>();
 
     protected override async Task OnInitializedAsync()
@@ -46,8 +62,10 @@
 
     private async Task LoadTrucks()
     {
+        _loading = true;
         using var context = await DbFactory.CreateDbContextAsync();
         _trucks = await context.DeliveryTrucks.Include(t => t.CompanyBranch).ToListAsync();
+        _loading = false;
     }
 
     private async Task CreateTruck()
