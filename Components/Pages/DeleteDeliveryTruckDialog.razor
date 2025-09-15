@@ -1,0 +1,32 @@
+@using Cascadia_MetalFlow_System.Data
+@using Cascadia_MetalFlow_System.Models
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">Delete Truck</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText>Are you sure you want to delete the truck with license plate "@Truck.LicensePlate"?</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Error" OnClick="Delete">Delete</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public DeliveryTruck Truck { get; set; } = default!;
+
+    private async Task Delete()
+    {
+        using var context = await DbFactory.CreateDbContextAsync();
+        context.DeliveryTrucks.Remove(Truck);
+        await context.SaveChangesAsync();
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    void Cancel() => MudDialog.Cancel();
+}

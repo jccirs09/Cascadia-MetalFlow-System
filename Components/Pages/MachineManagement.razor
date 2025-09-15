@@ -1,0 +1,87 @@
+@page "/machine-management"
+@attribute [Authorize(Roles = $"{RoleNames.Admin},{RoleNames.Manager},{RoleNames.Supervisor}")]
+
+@using Cascadia_MetalFlow_System.Data
+@using Cascadia_MetalFlow_System.Models
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject IDialogService DialogService
+
+<PageTitle>Machine Management</PageTitle>
+
+<h1>Machine Management</h1>
+
+<MudTable Items="@_machines" Hover="true" SortLabel="Sort By">
+    <ToolBarContent>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateMachine">Create Machine</MudButton>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>Name</MudTh>
+        <MudTh>Description</MudTh>
+        <MudTh>Branch</MudTh>
+        <MudTh>Actions</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Name">@context.Name</MudTd>
+        <MudTd DataLabel="Description">@context.Description</MudTd>
+        <MudTd DataLabel="Branch">@context.CompanyBranch?.Name</MudTd>
+        <MudTd>
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="@(() => EditMachine(context))" />
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="@(() => DeleteMachine(context))" />
+        </MudTd>
+    </RowTemplate>
+    <PagerContent>
+        <MudTablePager />
+    </PagerContent>
+</MudTable>
+
+@code {
+    private IEnumerable<Machine> _machines = new List<Machine>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadMachines();
+    }
+
+    private async Task LoadMachines()
+    {
+        using var context = await DbFactory.CreateDbContextAsync();
+        _machines = await context.Machines.Include(m => m.CompanyBranch).ToListAsync();
+    }
+
+    private async Task CreateMachine()
+    {
+        var dialog = await DialogService.ShowAsync<AddEditMachineDialog>("Create Machine");
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await LoadMachines();
+            StateHasChanged();
+        }
+    }
+
+    private async Task EditMachine(Machine machine)
+    {
+        var parameters = new DialogParameters { ["Machine"] = machine };
+        var dialog = await DialogService.ShowAsync<AddEditMachineDialog>("Edit Machine", parameters);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await LoadMachines();
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeleteMachine(Machine machine)
+    {
+        var parameters = new DialogParameters { ["Machine"] = machine };
+        var dialog = await DialogService.ShowAsync<DeleteMachineDialog>("Delete Machine", parameters);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await LoadMachines();
+            StateHasChanged();
+        }
+    }
+}

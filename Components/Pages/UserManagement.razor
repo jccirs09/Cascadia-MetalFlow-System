@@ -1,0 +1,142 @@
+@page "/user-management"
+@attribute [Authorize(Roles = $"{RoleNames.Admin},{RoleNames.Manager}")]
+
+@using Cascadia_MetalFlow_System.Data
+@using Cascadia_MetalFlow_System.Models
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject UserManager<ApplicationUser> UserManager
+@inject RoleManager<IdentityRole> RoleManager
+@inject IDialogService DialogService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>User Management</PageTitle>
+
+<h1>User Management</h1>
+
+<MudTable Items="@_userViewModels" Hover="true" SortLabel="Sort By">
+    <ToolBarContent>
+        <AuthorizeView Roles="@RoleNames.Admin">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateUser">Create User</MudButton>
+        </AuthorizeView>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>First Name</MudTh>
+        <MudTh>Last Name</MudTh>
+        <MudTh>Email</MudTh>
+        <MudTh>Roles</MudTh>
+        <MudTh>Branch</MudTh>
+        <MudTh>Actions</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="First Name">@context.User.FirstName</MudTd>
+        <MudTd DataLabel="Last Name">@context.User.LastName</MudTd>
+        <MudTd DataLabel="Email">@context.User.Email</MudTd>
+        <MudTd DataLabel="Roles">@string.Join(", ", context.Roles)</MudTd>
+        <MudTd DataLabel="Branch">@context.User.CompanyBranch?.Name</MudTd>
+        <MudTd>
+            <AuthorizeView Roles="@RoleNames.Admin" Context="authContext">
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="@(() => EditUser(context.User))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="@(() => DeleteUser(context.User))" />
+            </AuthorizeView>
+        </MudTd>
+    </RowTemplate>
+    <PagerContent>
+        <MudTablePager />
+    </PagerContent>
+</MudTable>
+
+@code {
+    private IEnumerable<UserViewModel> _userViewModels = new List<UserViewModel>();
+
+    public class UserViewModel
+    {
+        public ApplicationUser User { get; set; } = default!;
+        public IList<string> Roles { get; set; } = new List<string>();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsers();
+    }
+
+    private async Task LoadUsers()
+    {
+        using var context = await DbFactory.CreateDbContextAsync();
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        List<ApplicationUser> users;
+
+        if (user.IsInRole(RoleNames.Admin))
+        {
+            users = await context.Users.Include(u => u.CompanyBranch).ToListAsync();
+        }
+        else if (user.IsInRole(RoleNames.Manager))
+        {
+            var currentUser = await UserManager.GetUserAsync(user);
+            if (currentUser?.CompanyBranchId != null)
+            {
+                users = await context.Users
+                    .Where(u => u.CompanyBranchId == currentUser.CompanyBranchId)
+                    .Include(u => u.CompanyBranch)
+                    .ToListAsync();
+            }
+            else
+            {
+                users = new List<ApplicationUser>();
+            }
+        }
+        else
+        {
+            users = new List<ApplicationUser>();
+        }
+
+        var userViewModels = new List<UserViewModel>();
+        foreach (var u in users)
+        {
+            userViewModels.Add(new UserViewModel
+            {
+                User = u,
+                Roles = await UserManager.GetRolesAsync(u)
+            });
+        }
+        _userViewModels = userViewModels;
+    }
+
+    private async Task CreateUser()
+    {
+        var dialog = await DialogService.ShowAsync<AddEditUserDialog>("Create User");
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await LoadUsers();
+            StateHasChanged();
+        }
+    }
+
+    private async Task EditUser(ApplicationUser user)
+    {
+        var parameters = new DialogParameters { ["User"] = user };
+        var dialog = await DialogService.ShowAsync<AddEditUserDialog>("Edit User", parameters);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await LoadUsers();
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeleteUser(ApplicationUser user)
+    {
+        var parameters = new DialogParameters { ["User"] = user };
+        var dialog = await DialogService.ShowAsync<DeleteUserDialog>("Delete User", parameters);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await LoadUsers();
+            StateHasChanged();
+        }
+    }
+}

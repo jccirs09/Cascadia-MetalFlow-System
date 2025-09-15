@@ -1,0 +1,87 @@
+@page "/delivery-truck-management"
+@attribute [Authorize(Roles = $"{RoleNames.Admin},{RoleNames.Manager},{RoleNames.Driver}")]
+
+@using Cascadia_MetalFlow_System.Data
+@using Cascadia_MetalFlow_System.Models
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject IDialogService DialogService
+
+<PageTitle>Delivery Truck Management</PageTitle>
+
+<h1>Delivery Truck Management</h1>
+
+<MudTable Items="@_trucks" Hover="true" SortLabel="Sort By">
+    <ToolBarContent>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateTruck">Create Truck</MudButton>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>License Plate</MudTh>
+        <MudTh>Model</MudTh>
+        <MudTh>Branch</MudTh>
+        <MudTh>Actions</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="License Plate">@context.LicensePlate</MudTd>
+        <MudTd DataLabel="Model">@context.Model</MudTd>
+        <MudTd DataLabel="Branch">@context.CompanyBranch?.Name</MudTd>
+        <MudTd>
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="@(() => EditTruck(context))" />
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="@(() => DeleteTruck(context))" />
+        </MudTd>
+    </RowTemplate>
+    <PagerContent>
+        <MudTablePager />
+    </PagerContent>
+</MudTable>
+
+@code {
+    private IEnumerable<DeliveryTruck> _trucks = new List<DeliveryTruck>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTrucks();
+    }
+
+    private async Task LoadTrucks()
+    {
+        using var context = await DbFactory.CreateDbContextAsync();
+        _trucks = await context.DeliveryTrucks.Include(t => t.CompanyBranch).ToListAsync();
+    }
+
+    private async Task CreateTruck()
+    {
+        var dialog = await DialogService.ShowAsync<AddEditDeliveryTruckDialog>("Create Truck");
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await LoadTrucks();
+            StateHasChanged();
+        }
+    }
+
+    private async Task EditTruck(DeliveryTruck truck)
+    {
+        var parameters = new DialogParameters { ["Truck"] = truck };
+        var dialog = await DialogService.ShowAsync<AddEditDeliveryTruckDialog>("Edit Truck", parameters);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await LoadTrucks();
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeleteTruck(DeliveryTruck truck)
+    {
+        var parameters = new DialogParameters { ["Truck"] = truck };
+        var dialog = await DialogService.ShowAsync<DeleteDeliveryTruckDialog>("Delete Truck", parameters);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await LoadTrucks();
+            StateHasChanged();
+        }
+    }
+}

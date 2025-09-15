@@ -4,6 +4,7 @@ using Cascadia_MetalFlow_System.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Cascadia_MetalFlow_System.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250915010625_AddBranchToUser")]
+    partial class AddBranchToUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -121,60 +124,6 @@ namespace Cascadia_MetalFlow_System.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("CompanyBranches");
-                });
-
-            modelBuilder.Entity("Cascadia_MetalFlow_System.Models.DeliveryTruck", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CompanyBranchId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("LicensePlate")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("Model")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CompanyBranchId");
-
-                    b.ToTable("DeliveryTrucks");
-                });
-
-            modelBuilder.Entity("Cascadia_MetalFlow_System.Models.Machine", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CompanyBranchId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CompanyBranchId");
-
-                    b.ToTable("Machines");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -315,28 +264,6 @@ namespace Cascadia_MetalFlow_System.Migrations
                     b.HasOne("Cascadia_MetalFlow_System.Models.CompanyBranch", "CompanyBranch")
                         .WithMany()
                         .HasForeignKey("CompanyBranchId");
-
-                    b.Navigation("CompanyBranch");
-                });
-
-            modelBuilder.Entity("Cascadia_MetalFlow_System.Models.DeliveryTruck", b =>
-                {
-                    b.HasOne("Cascadia_MetalFlow_System.Models.CompanyBranch", "CompanyBranch")
-                        .WithMany()
-                        .HasForeignKey("CompanyBranchId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("CompanyBranch");
-                });
-
-            modelBuilder.Entity("Cascadia_MetalFlow_System.Models.Machine", b =>
-                {
-                    b.HasOne("Cascadia_MetalFlow_System.Models.CompanyBranch", "CompanyBranch")
-                        .WithMany()
-                        .HasForeignKey("CompanyBranchId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
 
                     b.Navigation("CompanyBranch");
                 });

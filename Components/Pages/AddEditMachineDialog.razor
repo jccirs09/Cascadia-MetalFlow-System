@@ -1,0 +1,55 @@
+@using Cascadia_MetalFlow_System.Data
+@using Cascadia_MetalFlow_System.Models
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">@_isEditMode ? "Edit" : "Add" Machine</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="Machine.Name" Label="Name" Required="true" />
+        <MudTextField @bind-Value="Machine.Description" Label="Description" Lines="3" />
+        <MudSelect T="int" @bind-Value="Machine.CompanyBranchId" Label="Branch" Required="true">
+            @foreach (var branch in _branches)
+            {
+                <MudSelectItem Value="@branch.Id">@branch.Name</MudSelectItem>
+            }
+        </MudSelect>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Save">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public Machine Machine { get; set; } = new();
+
+    private bool _isEditMode => Machine.Id != 0;
+    private List<CompanyBranch> _branches = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = await DbFactory.CreateDbContextAsync();
+        _branches = await context.CompanyBranches.ToListAsync();
+    }
+
+    private async Task Save()
+    {
+        using var context = await DbFactory.CreateDbContextAsync();
+        if (_isEditMode)
+        {
+            context.Machines.Update(Machine);
+        }
+        else
+        {
+            context.Machines.Add(Machine);
+        }
+        await context.SaveChangesAsync();
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    void Cancel() => MudDialog.Cancel();
+}

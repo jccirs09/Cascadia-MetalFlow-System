@@ -1,0 +1,83 @@
+@page "/company-branch-management"
+@attribute [Authorize(Roles = RoleNames.Admin)]
+@using Cascadia_MetalFlow_System.Data
+@using Cascadia_MetalFlow_System.Models
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject IDialogService DialogService
+
+<PageTitle>Company Branch Management</PageTitle>
+
+<h1>Company Branch Management</h1>
+
+<MudTable Items="@_branches" Hover="true" SortLabel="Sort By">
+    <ToolBarContent>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddBranch">Add Branch</MudButton>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh><MudTableSortLabel SortBy="new Func<CompanyBranch, object>(x => x.Name!)">Name</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<CompanyBranch, object>(x => x.Location!)">Location</MudTableSortLabel></MudTh>
+        <MudTh>Actions</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Name">@context.Name</MudTd>
+        <MudTd DataLabel="Location">@context.Location</MudTd>
+        <MudTd>
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="@(() => EditBranch(context))" />
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="@(() => DeleteBranch(context))" />
+        </MudTd>
+    </RowTemplate>
+    <PagerContent>
+        <MudTablePager />
+    </PagerContent>
+</MudTable>
+
+@code {
+    private IEnumerable<CompanyBranch> _branches = new List<CompanyBranch>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadBranches();
+    }
+
+    private async Task LoadBranches()
+    {
+        using var context = await DbFactory.CreateDbContextAsync();
+        _branches = await context.CompanyBranches.ToListAsync();
+    }
+
+    private async Task AddBranch()
+    {
+        var dialog = await DialogService.ShowAsync<AddEditBranchDialog>("Add Branch");
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await LoadBranches();
+            StateHasChanged();
+        }
+    }
+
+    private async Task EditBranch(CompanyBranch branch)
+    {
+        var parameters = new DialogParameters { ["Branch"] = branch };
+        var dialog = await DialogService.ShowAsync<AddEditBranchDialog>("Edit Branch", parameters);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await LoadBranches();
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeleteBranch(CompanyBranch branch)
+    {
+        var parameters = new DialogParameters { ["Branch"] = branch };
+        var dialog = await DialogService.ShowAsync<DeleteBranchDialog>("Delete Branch", parameters);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await LoadBranches();
+            StateHasChanged();
+        }
+    }
+}

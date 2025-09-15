@@ -8,6 +8,22 @@
     
     <MudNavLink Href="weather" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">Weather</MudNavLink>
 
+    <AuthorizeView Roles="@RoleNames.Admin">
+        <MudNavLink Href="company-branch-management" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Business">Company Branches</MudNavLink>
+    </AuthorizeView>
+
+    <AuthorizeView Roles="@($"{RoleNames.Admin},{RoleNames.Manager}")">
+        <MudNavLink Href="user-management" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.People">User Management</MudNavLink>
+    </AuthorizeView>
+
+    <AuthorizeView Roles="@($"{RoleNames.Admin},{RoleNames.Manager},{RoleNames.Supervisor}")">
+        <MudNavLink Href="machine-management" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.PrecisionManufacturing">Machine Management</MudNavLink>
+    </AuthorizeView>
+
+    <AuthorizeView Roles="@($"{RoleNames.Admin},{RoleNames.Manager},{RoleNames.Driver}")">
+        <MudNavLink Href="delivery-truck-management" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.LocalShipping">Delivery Trucks</MudNavLink>
+    </AuthorizeView>
+
     <MudNavLink Href="auth" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Lock">Auth Required</MudNavLink>
     <AuthorizeView>
         <Authorized>
